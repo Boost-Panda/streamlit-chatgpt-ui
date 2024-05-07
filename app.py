@@ -1,14 +1,23 @@
-import openai
+from openai import OpenAI
 import streamlit as st
+import os
 from streamlit_chat import message
+
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
 
 # Setting page title and header
 st.set_page_config(page_title="AVA", page_icon=":robot_face:")
 st.markdown("<h1 style='text-align: center;'>AVA - a totally harmless chatbot 😬</h1>", unsafe_allow_html=True)
 
-# Set org ID and API key
-openai.organization = "<YOUR_OPENAI_ORG_ID>"
-openai.api_key = "<YOUR_OPENAI_API_KEY>"
+
+
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=os.environ.get("OPENAI_API_KEY"),
+    organization=os.environ.get("OPENAI_ORGANIZATION"),
+)
 
 # Initialise session state variables
 if 'generated' not in st.session_state:
@@ -37,9 +46,9 @@ clear_button = st.sidebar.button("Clear Conversation", key="clear")
 
 # Map model names to OpenAI model IDs
 if model_name == "GPT-3.5":
-    model = "gpt-3.5-turbo"
+    model = "gpt-3.5-turbo-0125"
 else:
-    model = "gpt-4"
+    model = "gpt-4-turbo"
 
 # reset everything
 if clear_button:
@@ -60,7 +69,7 @@ if clear_button:
 def generate_response(prompt):
     st.session_state['messages'].append({"role": "user", "content": prompt})
 
-    completion = openai.ChatCompletion.create(
+    completion = client.chat.completions.create(
         model=model,
         messages=st.session_state['messages']
     )
