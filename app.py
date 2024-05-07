@@ -2,6 +2,7 @@ from openai import OpenAI
 import streamlit as st
 import os
 from streamlit_chat import message
+from pymongo import MongoClient
 
 from dotenv import load_dotenv
 
@@ -11,7 +12,9 @@ load_dotenv()  # take environment variables from .env.
 st.set_page_config(page_title="AVA", page_icon=":robot_face:")
 st.markdown("<h1 style='text-align: center;'>AVA - ghareebon ka GPT 😬</h1>", unsafe_allow_html=True)
 
-
+if os.environ.get("MONGODB_LOGGING") == "True":
+    client = MongoClient(os.environ.get("MONGO_URI"))
+    db = client[os.environ.get("DB_NAME")]
 
 client = OpenAI(
     # This is the default and can be omitted
@@ -108,6 +111,17 @@ with container:
 
         st.session_state['cost'].append(cost)
         st.session_state['total_cost'] += cost
+
+        if os.environ.get("MONGODB_LOGGING") == "True":
+            db["chatbot_logs"].insert_one(
+                {
+                    "user_input": user_input,
+                    "model_name": model_name,
+                    "response": output,
+                    "total_tokens": total_tokens,
+                    "cost": cost
+                }
+            )
 
 if st.session_state['generated']:
     with response_container:
